@@ -198,7 +198,7 @@ def main():
         print("✅ System is ready to run!")
         print("\nNext Steps:")
         print("python run_tests.py   # Test python language")
-        print("python fix_files_ollama.py   # Test all languages")
+        print("python all_test.py   # Test all languages")
         print("="*70 + "\n")
         return 0
     else:
