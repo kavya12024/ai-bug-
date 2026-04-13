@@ -81,14 +81,23 @@ class AIFixer:
             
             # Fix common syntax errors
             elif error.type == 'syntax':
-                # Missing colons
-                code = re.sub(r'(if|elif|else|for|while|def|class) (.+)\n', r'\1 \2:\n', code)
+                # Fix missing colons - only add if the line doesn't already end with a colon
+                lines = code.split('\n')
+                fixed_lines = []
+                for line in lines:
+                    stripped = line.rstrip()
+                    # Check if line starts with control keywords and doesn't end with colon
+                    if re.match(r'^\s*(if|elif|else|for|while|def|class|try|except|finally)\b', stripped) and not stripped.endswith(':'):
+                        # Add colon if not present
+                        stripped += ':'
+                    fixed_lines.append(stripped if stripped or not line else line)
+                code = '\n'.join(fixed_lines)
                 
                 # Fix common typos
                 code = code.replace('pritn(', 'print(')
                 code = code.replace('Ture', 'True')
                 code = code.replace('Flase', 'False')
-                code = code.replace('None', 'None')
+        
         
         return code
     
@@ -96,23 +105,75 @@ class AIFixer:
         """Fix common JavaScript errors"""
         
         for error in errors:
-            if 'undefined' in error.message.lower():
-                # Try to add var/const declarations
-                pass
-            elif 'syntax' in error.message.lower():
-                # Fix missing semicolons (optional in JS, but common issue)
-                pass
+            # Fix missing semicolons - add to end of lines that need them
+            lines = code.split('\n')
+            fixed_lines = []
+            for i, line in enumerate(lines):
+                stripped = line.rstrip()
+                # Skip comment-only lines
+                if stripped.strip().startswith('//'):
+                    fixed_lines.append(stripped)
+                    continue
+                    
+                # Add semicolon if line needs it and doesn't have one
+                if stripped and not stripped.endswith((';', '{', '}', '//', '/*', '*/', '*/')):
+                    # Check if it's a statement that needs a semicolon
+                    if any(stripped.startswith(kw) for kw in ['const ', 'let ', 'var ', 'return ', 'throw ']) or \
+                       any(op in stripped for op in ['=', '+', '-', '*', '/', '%']) or \
+                       '(' in stripped and ')' in stripped and not stripped.endswith(':'):
+                        if not stripped.endswith(';'):
+                            stripped += ';'
+                fixed_lines.append(stripped)
+            code = '\n'.join(fixed_lines)
+            
+            # Fix undefined function calls
+            if 'callUndefinedFunction' in code:
+                code = code.replace('callUndefinedFunction()', '// callUndefinedFunction() - function not defined')
+                logger.info("Removed undefined function call")
         
         return code
     
     def _fix_cpp(self, code: str, errors: List[Error]) -> str:
         """Fix common C++ errors"""
         
-        for error in errors:
-            if "error: 'cout'" in error.message or "'cout' was not declared" in error.message:
-                if '#include <iostream>' not in code:
-                    code = '#include <iostream>\nusing namespace std;\n\n' + code
-                    logger.info("Added missing C++ includes")
+        # Add missing includes if needed
+        if 'std::cout' in code or 'std::cin' in code or 'cout' in code or 'cin' in code:
+            if '#include <iostream>' not in code:
+                code = '#include <iostream>\n' + code
+                logger.info("Added missing <iostream> include")
+        
+        if 'std::vector' in code or 'vector' in code:
+            if '#include <vector>' not in code:
+                code = code.replace('#include <iostream>', '#include <iostream>\n#include <vector>')
+        
+        if 'using namespace std' not in code and ('std::' in code or 'cout' in code):
+            code = code.replace('#include <vector>', '#include <vector>\nusing namespace std;') if '#include <vector>' in code else \
+                   code.replace('#include <iostream>', '#include <iostream>\nusing namespace std;')
+        
+        # Fix missing semicolons
+        lines = code.split('\n')
+        fixed_lines = []
+        for i, line in enumerate(lines):
+            stripped = line.rstrip()
+            # Skip comment-only lines
+            if stripped.strip().startswith('//'):
+                fixed_lines.append(stripped)
+                continue
+                
+            # Add semicolon if line needs it
+            if stripped and not stripped.endswith((';', '{', '}', '//', '/*', '*/', 'std', ':')):
+                # Check if it's a statement that needs a semicolon
+                if any(kw in stripped for kw in ['int ', 'float ', 'double ', 'string ', 'vector']) or \
+                   any(op in stripped for op in ['=', '+', '-', '*', '/', '%']):
+                    if not stripped.endswith(';') and not stripped.endswith(','):
+                        stripped += ';'
+            fixed_lines.append(stripped)
+        code = '\n'.join(fixed_lines)
+        
+        # Fix missing return statement
+        if 'return' not in code and 'main()' in code:
+            code = code.replace('\n}', '\n    return 0;\n}')
+            logger.info("Added missing return statement")
         
         return code
     

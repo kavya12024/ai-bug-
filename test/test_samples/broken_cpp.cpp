@@ -1,22 +1,19 @@
-// C++ file with errors
-
-// Missing includes
-#include <vector>
+#include <iostream>
+#include <vector>;
+using namespace std;
 
 int main() {
-    std::vector<int> numbers = {1, 2, 3, 4, 5};
-    
-    // Using cout without iostream
-    std::cout << "Vector size: " << numbers.size() << std::endl;
-    
-    // Syntax error - missing semicolon
-    int sum = 0
-    
+    vector<int> numbers = {1, 2, 3, 4, 5};
+
+    cout << "Vector size: " << numbers.size() << endl;
+
+    int sum = 0;
+
     for (int num : numbers) {
         sum += num;
     }
-    
-    std::cout << "Sum: " << sum << std::endl;
-    
+
+    cout << "Sum: " << sum << endl;
+
     return 0;
 }

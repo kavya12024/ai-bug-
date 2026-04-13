@@ -40,10 +40,10 @@ class DockerRunner:
         try:
             logger.info("Running Python code in container")
             
-            # Create a temporary file in memory
+            # Use array format to properly pass multi-line code without shell interpretation
             container = self.client.containers.run(
                 "python:3.11-slim",
-                f"python -c {repr(code)}",
+                ["python", "-c", code],
                 stdout=True,
                 stderr=True,
                 detach=True
@@ -79,9 +79,10 @@ class DockerRunner:
         try:
             logger.info("Running Node.js code in container")
             
+            # Use array format to properly pass multi-line code without shell interpretation
             container = self.client.containers.run(
                 "node:18-alpine",
-                f"node -e {repr(code)}",
+                ["node", "-e", code],
                 stdout=True,
                 stderr=True,
                 detach=True

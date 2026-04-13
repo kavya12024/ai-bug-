@@ -29,12 +29,14 @@ class ExecutionResult:
 class LoopExecutor:
     """Execute code fixing loop"""
     
-    def __init__(self, use_ollama: bool = False):
+    def __init__(self, use_ollama: bool = None):
+        if use_ollama is None:
+            use_ollama = Config.USE_OLLAMA
         self.git_handler = GitHandler()
         self.docker_runner = DockerRunner()
         self.error_parser = ErrorParser()
-        self.ai_fixer = AIFixer(use_ollama=use_ollama)
-        logger.info("LoopExecutor initialized")
+        self.ai_fixer = AIFixer(use_ollama=use_ollama, ollama_model=Config.OLLAMA_MODEL)
+        logger.info(f"LoopExecutor initialized with Ollama={use_ollama}, model={Config.OLLAMA_MODEL if use_ollama else 'N/A'}")
     
     def execute_fix_loop(
         self,
