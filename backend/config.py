@@ -7,8 +7,8 @@ class Config:
     """Base configuration"""
     DEBUG = os.getenv("DEBUG", "False") == "True"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-    MAX_FIX_ATTEMPTS = int(os.getenv("MAX_FIX_ATTEMPTS", "5"))
-    TIMEOUT_SECONDS = int(os.getenv("TIMEOUT_SECONDS", "30"))
+    MAX_FIX_ATTEMPTS = int(os.getenv("MAX_FIX_ATTEMPTS", "3"))
+    TIMEOUT_SECONDS = int(os.getenv("TIMEOUT_SECONDS", "15"))
     USE_OLLAMA = os.getenv("USE_OLLAMA", "True") == "True"
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "codellama:7b")
 

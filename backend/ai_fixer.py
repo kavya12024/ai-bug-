@@ -198,7 +198,7 @@ class AIFixer:
     
     def _fix_with_ollama(self, code: str, errors: List[Error], language: str) -> str:
         """
-        Use Ollama to fix code
+        Use Ollama to fix code with timeout
         
         This is a template - requires ollama package and running Ollama service
         """
@@ -215,12 +215,38 @@ Original code:
 
 Return ONLY the fixed code, no explanations."""
             
-            response = self.ollama_client.generate(
-                model=self.ollama_model,
-                prompt=prompt,
-                stream=False
-            )
+            # Use timeout wrapper for Ollama call (30 seconds max)
+            import threading
+            result = [None]
+            error_obj = [None]
             
+            def call_ollama():
+                try:
+                    response = self.ollama_client.generate(
+                        model=self.ollama_model,
+                        prompt=prompt,
+                        stream=False
+                    )
+                    result[0] = response
+                except Exception as e:
+                    error_obj[0] = e
+            
+            thread = threading.Thread(target=call_ollama, daemon=True)
+            thread.start()
+            thread.join(timeout=30)  # Wait max 30 seconds
+            
+            if thread.is_alive():
+                logger.warning("Ollama request timed out after 30 seconds - using rule-based fixes only")
+                return code
+            
+            if error_obj[0]:
+                raise error_obj[0]
+            
+            if result[0] is None:
+                logger.warning("Ollama returned no response")
+                return code
+            
+            response = result[0]
             fixed_code = response['response'].strip()
             
             # Extract code from markdown if wrapped
